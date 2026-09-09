@@ -41,21 +41,25 @@ export default defineConfig(async () => {
   process.env.WRANGLER_LOG_PATH ??= '.wrangler/logs';
   process.env.MINIFLARE_REGISTRY_PATH ??= '.wrangler/registry';
 
-  // Wrangler snapshots its log path while the Cloudflare plugin is imported.
-  const { cloudflare } = await import('@cloudflare/vite-plugin');
+  // Render only needs the static export. Loading the Cloudflare development
+  // runtime there starts a workerd RPC channel that is unnecessary for the
+  // build and can fail with an oversized Cap'n Proto message.
+  const isRenderBuild = process.env.RENDER === 'true';
+  const cloudflarePlugin = isRenderBuild
+    ? []
+    : [
+        // Wrangler snapshots its log path while the plugin is imported.
+        (await import('@cloudflare/vite-plugin')).cloudflare({
+          viteEnvironment: { name: 'rsc', childEnvironments: ['ssr'] },
+          config: localBindingConfig,
+        }),
+      ];
 
   return {
     css: { postcss: { plugins: [tailwindcss()] } },
     server: isCodexSeatbeltSandbox
       ? { watch: { useFsEvents: false, usePolling: true } }
       : undefined,
-    plugins: [
-      vinext(),
-      sites(),
-      cloudflare({
-        viteEnvironment: { name: 'rsc', childEnvironments: ['ssr'] },
-        config: localBindingConfig,
-      }),
-    ],
+    plugins: [vinext(), ...(isRenderBuild ? [] : [sites()]), ...cloudflarePlugin],
   };
 });

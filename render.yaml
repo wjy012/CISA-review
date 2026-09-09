@@ -4,7 +4,7 @@ services:
     runtime: static
     repo: https://github.com/wjy012/CISA-review
     branch: main
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci && RENDER=true npm run build
     staticPublishPath: ./dist/client
     autoDeployTrigger: commit
     envVars:
