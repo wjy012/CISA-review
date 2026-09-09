@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: wjy012-cisa-review
+    runtime: static
+    repo: https://github.com/wjy012/CISA-review
+    branch: main
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist/client
+    autoDeployTrigger: commit
+    envVars:
+      - key: NEXT_PUBLIC_SITE_URL
+        value: https://wjy012-cisa-review.onrender.com
